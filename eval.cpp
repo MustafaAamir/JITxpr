@@ -17,7 +17,8 @@ struct S {
   vector<shared_ptr<S>> rest;
 
   S(string h) : head(std::move(h)) {}
-  S(string h, vector<shared_ptr<S>> r) : head(std::move(h)), rest(std::move(r)) {}
+  S(string h, vector<shared_ptr<S>> r)
+      : head(std::move(h)), rest(std::move(r)) {}
 
   string to_string() const {
     ostringstream oss;
@@ -119,7 +120,7 @@ int prefix_binding_power(char op) {
   case '-':
     return 9;
   case '(':
-     return 15;
+    return 15;
   default:
     return -1;
   }
@@ -159,7 +160,8 @@ shared_ptr<S> expr_bp(Lexer &lexer, int min_bp) {
       break;
 
     if (lookahead.type == TokenType::Op) {
-      if (int l_bp = postfix_binding_power(lookahead.value[0]); l_bp >= min_bp) {
+      if (int l_bp = postfix_binding_power(lookahead.value[0]);
+          l_bp >= min_bp) {
         lexer.next();
         lhs = make_shared<S>(lookahead.value, vector<shared_ptr<S>>{lhs});
         continue;
@@ -185,7 +187,6 @@ shared_ptr<S> expr_bp(Lexer &lexer, int min_bp) {
 
   return lhs;
 }
-
 
 typedef int (*pifi)(int);
 typedef int (*pifv)(void);
@@ -247,112 +248,117 @@ jit_node_t *compile_rpn(const char *expr) {
 }
 
 pifv eval(const string line) {
-    _jit = jit_new_state();
-    auto c_expr = compile_rpn(line.c_str());
-    (void)jit_emit();
-    auto eval = (pifv)jit_address(c_expr);
-    jit_clear_state();
-    return eval;
+  _jit = jit_new_state();
+  auto c_expr = compile_rpn(line.c_str());
+  (void)jit_emit();
+  auto eval = (pifv)jit_address(c_expr);
+  jit_clear_state();
+  return eval;
 }
 
 #include <cassert>
 #include <iostream>
 
 void test_single_digit() {
-    assert(expr("3")->to_string() == "3");
-    assert(expr("42")->to_string() == "42");
+  assert(expr("3")->to_string() == "3");
+  assert(expr("42")->to_string() == "42");
 }
 
 void test_simple_operations() {
-    assert(expr("3 + 4")->to_string() == "3 4 +");
-    assert(expr("10 - 5")->to_string() == "10 5 -");
-    assert(expr("6 * 7")->to_string() == "6 7 *");
-    assert(expr("8 / 2")->to_string() == "8 2 /");
+  assert(expr("3 + 4")->to_string() == "3 4 +");
+  assert(expr("10 - 5")->to_string() == "10 5 -");
+  assert(expr("6 * 7")->to_string() == "6 7 *");
+  assert(expr("8 / 2")->to_string() == "8 2 /");
 }
 
 void test_operator_precedence() {
-    assert(expr("3 + 4 * 5")->to_string() == "3 4 5 * +");
-    assert(expr("10 - 5 / 5")->to_string() == "10 5 5 / -");
-    assert(expr("1 + 2 * 3 - 4 / 5")->to_string() == "1 2 3 * + 4 5 / -");
+  assert(expr("3 + 4 * 5")->to_string() == "3 4 5 * +");
+  assert(expr("10 - 5 / 5")->to_string() == "10 5 5 / -");
+  assert(expr("1 + 2 * 3 - 4 / 5")->to_string() == "1 2 3 * + 4 5 / -");
 }
 
 void test_parentheses() {
-    assert(expr("(3 + 4) * 5")->to_string() == "3 4 + 5 *");
-    assert(expr("(1 + 2) * (3 - 4)")->to_string() == "1 2 + 3 4 - *");
+  assert(expr("(3 + 4) * 5")->to_string() == "3 4 + 5 *");
+  assert(expr("(1 + 2) * (3 - 4)")->to_string() == "1 2 + 3 4 - *");
 }
 
 void test_nested_parentheses() {
-    assert(expr("((3 + 4) * 5) / 2")->to_string() == "3 4 + 5 * 2 /");
-    assert(expr("(1 + (2 * 3)) - (4 / (5 + 6))")->to_string() == "1 2 3 * + 4 5 6 + / -");
+  assert(expr("((3 + 4) * 5) / 2")->to_string() == "3 4 + 5 * 2 /");
+  assert(expr("(1 + (2 * 3)) - (4 / (5 + 6))")->to_string() ==
+         "1 2 3 * + 4 5 6 + / -");
 }
 
 void test_complex_expressions() {
-    assert(expr("3 + 4 * 2 / (1 - 5) + 6")->to_string() == "3 4 2 * 1 5 - / + 6 +");
-    assert(expr("42 * (35 + 12) / (7 - 3) + 8")->to_string() == "42 35 12 + * 7 3 - / 8 +");
+  assert(expr("3 + 4 * 2 / (1 - 5) + 6")->to_string() ==
+         "3 4 2 * 1 5 - / + 6 +");
+  assert(expr("42 * (35 + 12) / (7 - 3) + 8")->to_string() ==
+         "42 35 12 + * 7 3 - / 8 +");
 }
 
 void test_unary_operations() {
-    assert(expr("-3")->to_string() == "3 -");
-    assert(expr("+42")->to_string() == "42 +");
-    assert(expr("-3 + 4")->to_string() == "3 - 4 +");
-    assert(expr("-3 * (4 + 2)")->to_string() == "3 - 4 2 + *");
+  assert(expr("-3")->to_string() == "3 -");
+  assert(expr("+42")->to_string() == "42 +");
+  assert(expr("-3 + 4")->to_string() == "3 - 4 +");
+  assert(expr("-3 * (4 + 2)")->to_string() == "3 - 4 2 + *");
 }
 
 void test_edge_cases() {
-    // Minimal input
-    assert(expr("1")->to_string() == "1");
+  // Minimal input
+  assert(expr("1")->to_string() == "1");
 
-    // Extra spaces
-    assert(expr("  3   + 4   ")->to_string() == "3 4 +");
+  // Extra spaces
+  assert(expr("  3   + 4   ")->to_string() == "3 4 +");
 
-    // Complex parentheses
-    assert(expr("(((3)))")->to_string() == "3");
-    assert(expr("(3 + (4 * (5)))")->to_string() == "3 4 5 * +");
+  // Complex parentheses
+  assert(expr("(((3)))")->to_string() == "3");
+  assert(expr("(3 + (4 * (5)))")->to_string() == "3 4 5 * +");
 
-    // Multiple operators in sequence
-    assert(expr("3 + 4 - 5")->to_string() == "3 4 + 5 -");
-    assert(expr("6 * 7 / 2")->to_string() == "6 7 * 2 /");
+  // Multiple operators in sequence
+  assert(expr("3 + 4 - 5")->to_string() == "3 4 + 5 -");
+  assert(expr("6 * 7 / 2")->to_string() == "6 7 * 2 /");
 
-    // Invalid input should throw errors (commented out as assert does not catch exceptions)
-    // try { expr("+"); assert(false); } catch (...) {} // Unary + without operand
-    // try { expr("(3 + 4"); assert(false); } catch (...) {} // Mismatched parentheses
-    // try { expr(")3 + 4("); assert(false); } catch (...) {} // Invalid parentheses
+  // Invalid input should throw errors (commented out as assert does not catch
+  // exceptions) try { expr("+"); assert(false); } catch (...) {} // Unary +
+  // without operand try { expr("(3 + 4"); assert(false); } catch (...) {} //
+  // Mismatched parentheses try { expr(")3 + 4("); assert(false); } catch (...)
+  // {} // Invalid parentheses
 }
 
 void test_large_numbers() {
-    assert(expr("123 + 456")->to_string() == "123 456 +");
-    assert(expr("99999 * 88888")->to_string() == "99999 88888 *");
-    assert(expr("1234567890 - 987654321")->to_string() == "1234567890 987654321 -");
+  assert(expr("123 + 456")->to_string() == "123 456 +");
+  assert(expr("99999 * 88888")->to_string() == "99999 88888 *");
+  assert(expr("1234567890 - 987654321")->to_string() ==
+         "1234567890 987654321 -");
 }
 
 void test_no_operators() {
-    assert(expr("123")->to_string() == "123");
-    assert(expr("456 789")->to_string() == "456 789");
+  assert(expr("123")->to_string() == "123");
+  assert(expr("456 789")->to_string() == "456 789");
 }
 
 void test_postfix_operators() {
-    assert(expr("3!")->to_string() == "3 !");
-    assert(expr("(4 + 5)!")->to_string() == "4 5 + !");
+  assert(expr("3!")->to_string() == "3 !");
+  assert(expr("(4 + 5)!")->to_string() == "4 5 + !");
 }
 
 int tests() {
-    test_single_digit();
-    test_simple_operations();
-    test_operator_precedence();
-    test_parentheses();
-    test_nested_parentheses();
-    test_complex_expressions();
-    test_unary_operations();
-    test_edge_cases();
-    test_large_numbers();
-    test_no_operators();
-    test_postfix_operators();
+  test_single_digit();
+  test_simple_operations();
+  test_operator_precedence();
+  test_parentheses();
+  test_nested_parentheses();
+  test_complex_expressions();
+  test_unary_operations();
+  test_edge_cases();
+  test_large_numbers();
+  test_no_operators();
+  test_postfix_operators();
 
-    std::cout << "All tests passed!" << std::endl;
-    return 0;
+  std::cout << "All tests passed!" << std::endl;
+  return 0;
 }
 int main(int argc, char **argv) {
-  tests();
+  /*tests();*/
   jit_node_t *c_expr;
   string line;
   init_jit(argv[0]);
@@ -361,7 +367,7 @@ int main(int argc, char **argv) {
     getline(cin, line);
     auto result = expr(line);
     auto function = eval(result->to_string());
-    cout << result->to_string() << " -> " << function()<< endl;
+    cout << result->to_string() << " -> " << function() << endl;
   } while (line != "quit");
 
   finish_jit();
